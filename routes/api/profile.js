@@ -9,6 +9,8 @@ const Profile = require('../../models/Profile');
 
 // Load validation utils
 const validateProfileInput = require('../../validations/profile');
+
+const ErrorHandler = require('../../utils/error_handler');
 /**
  * @route   GET api/profile/test
  * @desc    Tests profile routes
@@ -32,13 +34,81 @@ router.get(
       .then(profile => {
         if (!profile) {
           errors.noprofile = 'There is no profile for this user';
-          return res.status(404).json(errors);
+          return ErrorHandler.notFound(errors, res);
         }
         res.json(profile);
       })
-      .catch(err => res.status(404).json(err));
+      .catch(err => ErrorHandler.notFound(err, res));
   }
 );
+
+/**
+ * @route   GET api/profile/all
+ * @desc    Get all profiles
+ * @access  public
+ */
+router.get('/all', (req, res) => {
+  const errors = {};
+  Profile.find()
+    .populate('user', ['name', 'avatar'])
+    .then(profiles => {
+      if (!profiles) {
+        errors.noprofile = "Profile doesn't exist for this user";
+        return ErrorHandler.notFound(errors, res);
+      }
+
+      res.json(profiles);
+    })
+    .catch(err => {
+      errors.noprofile = 'There are no profiles';
+      console.log(err);
+      ErrorHandler.notFound(errors, res);
+    });
+});
+
+/**
+ * @route   GET api/profile/handle/:handle
+ * @desc    Get Profile by handle
+ * @access  public
+ */
+router.get('/handle/:handle', (req, res) => {
+  const errors = {};
+  Profile.findOne({ handle: req.params.handle })
+    .populate('user', ['name', 'avatar'])
+    .then(profile => {
+      if (!profile) {
+        errors.noprofile = "Profile doesn't exist for this user";
+        return ErrorHandler.notFound(errors, res);
+      }
+
+      res.json(profile);
+    })
+    .catch(err => ErrorHandler.notFound(err, res));
+});
+
+/**
+ * @route   GET api/profile/user/:user_id
+ * @desc    Get Profile by user id
+ * @access  public
+ */
+router.get('/user/:user_id', (req, res) => {
+  const errors = {};
+  Profile.findOne({ user: req.params.user_id })
+    .populate('user', ['name', 'avatar'])
+    .then(profile => {
+      if (!profile) {
+        errors.noprofile = "Profile doesn't exist for this user";
+        return ErrorHandler.notFound(errors, res);
+      }
+
+      res.json(profile);
+    })
+    .catch(err => {
+      errors.noprofile = "Profile doesn't exist for this user";
+      console.log(err);
+      return ErrorHandler.notFound(errors, res);
+    });
+});
 
 /**
  * @route   POST api/profile
@@ -52,7 +122,7 @@ router.post(
     const { errors, isValid } = validateProfileInput(req.body);
 
     if (!isValid) {
-      return res.status(400).json(errors);
+      return ErrorHandler.badRequest(errors, res);
     }
     const profileFields = {};
     profileFields.user = req.user.id;
@@ -89,7 +159,7 @@ router.post(
         Profile.findOne({ handle: profileFields.handle }).then(profile => {
           if (profile) {
             errors.handle = 'That handle already exists';
-            res.status(400).json(errors);
+            return ErrorHandler.notFound(errors, res);
           }
         });
 
