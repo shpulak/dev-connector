@@ -13,6 +13,9 @@ const User = require('../../models/User');
 const validateRegisterInput = require('../../validations/register');
 const validateLoginInput = require('../../validations/login');
 
+// Load Error Handling Util
+const ErrorHandler = require('../../utils/error_handler');
+
 const router = express.Router();
 
 /**
@@ -32,13 +35,13 @@ router.post('/register', (req, res) => {
 
   // Check validation
   if (!isValid) {
-    return res.status(400).json(errors);
+    return ErrorHandler.badRequest(errors, res);
   }
 
   User.findOne({ email: req.body.email }).then(user => {
     if (user) {
       errors.email = 'Email already exists!';
-      return res.status(400).json(errors);
+      return ErrorHandler.badRequest(errors, res);
     } else {
       const avatar = gravatar.url(req.body.email, {
         s: '200', // Size
@@ -81,7 +84,7 @@ router.post('/login', (req, res) => {
 
   // Check validation
   if (!isValid) {
-    return res.status(400).json(errors);
+    return ErrorHandler.badRequest(errors, res);
   }
 
   // Find User
@@ -89,7 +92,7 @@ router.post('/login', (req, res) => {
     // Check for user
     if (!user) {
       errors.email = 'User not found';
-      return res.status(404).json(errors);
+      return ErrorHandler.notFound(errors, res);
     }
 
     // Check password
@@ -113,7 +116,7 @@ router.post('/login', (req, res) => {
         );
       } else {
         errors.password = 'Password Incorrect';
-        return res.status(400).json(errors);
+        return ErrorHandler.badRequest(errors, res);
       }
     });
   });
