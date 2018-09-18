@@ -96,4 +96,3 @@ class ProfileHeader extends Component {
 }
 
 export default ProfileHeader;
-<h1>Profile Header</h1>;
