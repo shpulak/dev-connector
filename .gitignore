@@ -20,6 +20,9 @@ yarn-error.log*
 
 package-lock.json
 
+# configs
+/config/keys_dev.js
+
 ## Client dependencies
 /client/node_modules
 
